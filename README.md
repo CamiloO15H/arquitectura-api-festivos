@@ -5,7 +5,7 @@
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
 > **Fecha de Entrega:** Septiembre 24, 2026  
-> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/Camilo015H/arquitectura-api-festivos)
+> **Repositorio Oficial:** [https://github.com/CamiloO15H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | # | Nombre Completo | Usuario GitHub |
 | :-: | :--- | :--- |
-| 1 | **Camilo Ospina Hernández** | [@Camilo015H](https://github.com/Camilo015H) |
+| 1 | **Camilo Ospina Hernández** | [@CamiloO15H](https://github.com/CamiloO15H) |
 | 2 | **Luis David Orozco Moreno** | Integrante |
 
 ---
@@ -146,7 +146,7 @@ Estimado profesor Fray León Osorio Rivera,
 Compartimos el enlace al repositorio público de GitHub que contiene los diagramas arquitectónicos correspondientes al primer seguimiento (20%) del curso Arquitectura de Software II:
 
 🔗 Link del Repositorio en GitHub:
-https://github.com/Camilo015H/arquitectura-api-festivos
+https://github.com/CamiloO15H/arquitectura-api-festivos
 
 Integrantes del equipo de trabajo:
 1. Camilo Ospina Hernández
