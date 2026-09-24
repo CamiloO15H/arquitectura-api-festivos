@@ -5,18 +5,16 @@
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
 > **Fecha de Entrega:** Septiembre 24, 2026  
+> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/Camilo015H/arquitectura-api-festivos)
 
 ---
 
 ## 👥 Integrantes del Equipo
 
-| Nombre Completo | Cédula / Identificación | Correo Electrónico Institucional |
-| :--- | :--- | :--- |
-| *[Nombre Estudiante 1]* | *[C.C. 1]* | *[email1@correo.itm.edu.co]* |
-| *[Nombre Estudiante 2]* | *[C.C. 2]* | *[email2@correo.itm.edu.co]* |
-| *[Nombre Estudiante 3]* | *[C.C. 3]* | *[email3@correo.itm.edu.co]* |
-| *[Nombre Estudiante 4]* | *[C.C. 4]* | *[email4@correo.itm.edu.co]* |
-| *[Nombre Estudiante 5]* | *[C.C. 5]* | *[email5@correo.itm.edu.co]* |
+| # | Nombre Completo | Usuario GitHub |
+| :-: | :--- | :--- |
+| 1 | **Camilo Ospina Hernández** | [@Camilo015H](https://github.com/Camilo015H) |
+| 2 | **Luis David Orozco Moreno** | Integrante |
 
 ---
 
@@ -24,10 +22,10 @@
 
 El presente repositorio contiene la entrega oficial de la **fase de modelado arquitectónico** para la **API RESTful de Festivos de Colombia**, construida sobre el stack **Node.js + Express.js** y persistida en **MongoDB**.
 
-Cumpliendo con los estándares evaluativos del docente Fray León Osorio:
-1. **Modelado en Código Vivo (*Diagrams as Code*):** Todo el modelado fue redactado en lenguaje estándar **Mermaid.js**, garantizando interoperabilidad, control de versiones nativo en Git y renderizado directo en GitHub y VS Code.
-2. **Correspondencia Fiel con la Implementación:** Los diagramas reflejan directamente los archivos, capas y flujos que se codificarán en la etapa de programación posterior.
-3. **Aislamiento de Lógica Algorítmica:** La base de datos no contiene fechas estáticas precalculadas, sino las directrices de cálculo. La arquitectura modela formalmente el componente de servicio encargado de los algoritmos de Pascua y traslados de la Ley Emiliani.
+Cumpliendo rigurosamente con los lineamientos técnicos y pedagógicos del docente Fray León Osorio Rivera:
+1. **Modelado en Código Editable (*Diagrams as Code*):** Se utiliza exclusivamente la sintaxis estándar de **Mermaid.js**, permitiendo renderizado nativo en GitHub, control de versiones sin imágenes estáticas y portabilidad completa.
+2. **Correspondencia Fiel con la Implementación:** Los diagramas reflejan directamente la estructura de archivos, módulos y capas que se codificarán en la etapa posterior de implementación.
+3. **Aislamiento de Lógica Algorítmica:** La base de datos almacena las reglas y directrices de cálculo (no fechas estáticas). La arquitectura incorpora formalmente un servicio especializado para el cálculo de la Pascua y los traslados al lunes ordenados por la Ley Emiliani (Ley 51 de 1983).
 
 ---
 
@@ -65,10 +63,10 @@ classDiagram
 *Archivo fuente individual:* [`diagrama-arquitectura-festivos.md`](./diagrama-arquitectura-festivos.md)
 
 ### Justificación
-Sigue un patrón horizontal por capas estricto (*Separation of Concerns*). Incorpora:
-* **Entrada y Validación:** El middleware `festivo.validador.js` actúa como *Chain of Responsibility* antes del controlador, garantizando el rechazo temprano de fechas erróneas (ej. 35 de febrero).
+Sigue un patrón horizontal por capas estricto (*Separation of Concerns*):
+* **Entrada y Validación:** El middleware `festivo.validador.js` actúa como *Chain of Responsibility* (`next()`) antes del controlador, garantizando el rechazo temprano de fechas erróneas (ej. 35 de febrero).
 * **Lógica de Negocio Desacoplada:** `calculoFechas.servicio.js` aísla las fórmulas astronómicas de la Pascua y los traslados al lunes de la Ley Emiliani.
-* **Acceso a Datos:** `festivo.repositorio.js` gestiona directamente las colecciones en MongoDB.
+* **Acceso a Datos:** `festivo.repositorio.js` gestiona directamente las colecciones en MongoDB sin sobrecarga innecesaria de frameworks.
 
 ```mermaid
 graph TD
@@ -115,7 +113,7 @@ graph TD
     Services -.->|10. Retorna festivos calculados a| Controllers
     Controllers -.->|11. Respuesta JSON / HTTP Status| Client
 
-    %% Estilos de Nodos
+    %% Estilos de Nodos (Paleta de Colores Institucional)
     style ClientLayer fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
     style PresentationLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     style BusinessLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
@@ -131,7 +129,7 @@ graph TD
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/festivos/verificar/:anio/:mes/:dia` | Verifica si una fecha puntual es festiva en Colombia. | `"Es Festivo"` / `"No es festivo"` / `"Fecha No valida"` |
 | `GET` | `/api/festivos/obtener/:anio` | Devuelve el listado completo de festivos del año (consumido por Spring Boot). | Array JSON de festivos con fechas `AAAA-MM-DD`. |
-| `POST`| `/api/festivos/agregar` | Registra una nueva regla de festivo dentro de un tipo existente. | Objeto festivo registrado con `201 Created`. |
+| `POST`| `/api/festivos/agregar` | Registra una nueva regla de festivo dentro de un tipo existente (ej. Virgen de Chiquinquirá). | Objeto festivo registrado con `201 Created`. |
 | `PUT` | `/api/festivos/modificar` | Actualiza la información o regla de un festivo embebido. | Objeto modificado con `200 OK`. |
 | `DELETE`| `/api/festivos/eliminar/:id` | Elimina la configuración de un festivo. | Mensaje de confirmación con `200 OK`. |
 
@@ -141,21 +139,18 @@ graph TD
 
 ```text
 Para: frayosorio@gmail.com
-Asunto: Entrega Primer Seguimiento 20% - Diagramas Arquitectura API Festivos - [Nombre del Grupo o Representante]
+Asunto: Entrega Primer Seguimiento 20% - Diagramas Arquitectura API Festivos - Camilo Ospina y Luis David Orozco
 
 Estimado profesor Fray León Osorio Rivera,
 
 Compartimos el enlace al repositorio público de GitHub que contiene los diagramas arquitectónicos correspondientes al primer seguimiento (20%) del curso Arquitectura de Software II:
 
 🔗 Link del Repositorio en GitHub:
-https://github.com/[USUARIO_O_ORGANIZACION]/[NOMBRE_DEL_REPOSITORIO]
+https://github.com/Camilo015H/arquitectura-api-festivos
 
 Integrantes del equipo de trabajo:
-1. [Nombre Completo 1] - [Documento / C.C.]
-2. [Nombre Completo 2] - [Documento / C.C.]
-3. [Nombre Completo 3] - [Documento / C.C.]
-4. [Nombre Completo 4] - [Documento / C.C.]
-5. [Nombre Completo 5] - [Documento / C.C.]
+1. Camilo Ospina Hernández
+2. Luis David Orozco Moreno
 
 Archivos incluidos en el repositorio:
 - README.md (Consolidado general con renderizado nativo en GitHub)
@@ -165,5 +160,6 @@ Archivos incluidos en el repositorio:
 Quedamos atentos a sus comentarios y retroalimentación.
 
 Cordialmente,
-[Equipo de Trabajo]
+Camilo Ospina Hernández
+Luis David Orozco Moreno
 ```
