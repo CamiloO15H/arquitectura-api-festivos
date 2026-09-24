@@ -5,7 +5,7 @@
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
 > **Fecha de Entrega:** Septiembre 24, 2026  
-> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/Camilo015H/arquitectura-api-festivos)
+> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/Camilo015H/arquitectura-api-festivos.git)
 
 ---
 
