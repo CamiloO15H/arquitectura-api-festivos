@@ -5,7 +5,7 @@
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
 > **Fecha de Entrega:** Septiembre 24, 2026  
-> **Repositorio Oficial:** [https://github.com/CamiloO15H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)
+> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/Camilo015H/arquitectura-api-festivos)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | # | Nombre Completo | Usuario GitHub |
 | :-: | :--- | :--- |
-| 1 | **Camilo Ospina Hernández** | [@CamiloO15H](https://github.com/CamiloO15H) |
+| 1 | **Camilo Ospina Hernández** | [@Camilo015H](https://github.com/Camilo015H) |
 | 2 | **Luis David Orozco Moreno** | Integrante |
 
 ---
@@ -132,34 +132,3 @@ graph TD
 | `POST`| `/api/festivos/agregar` | Registra una nueva regla de festivo dentro de un tipo existente (ej. Virgen de Chiquinquirá). | Objeto festivo registrado con `201 Created`. |
 | `PUT` | `/api/festivos/modificar` | Actualiza la información o regla de un festivo embebido. | Objeto modificado con `200 OK`. |
 | `DELETE`| `/api/festivos/eliminar/:id` | Elimina la configuración de un festivo. | Mensaje de confirmación con `200 OK`. |
-
----
-
-## ✉️ Plantilla de Correo de Entrega para el Docente
-
-```text
-Para: frayosorio@gmail.com
-Asunto: Entrega Primer Seguimiento 20% - Diagramas Arquitectura API Festivos - Camilo Ospina y Luis David Orozco
-
-Estimado profesor Fray León Osorio Rivera,
-
-Compartimos el enlace al repositorio público de GitHub que contiene los diagramas arquitectónicos correspondientes al primer seguimiento (20%) del curso Arquitectura de Software II:
-
-🔗 Link del Repositorio en GitHub:
-https://github.com/CamiloO15H/arquitectura-api-festivos
-
-Integrantes del equipo de trabajo:
-1. Camilo Ospina Hernández
-2. Luis David Orozco Moreno
-
-Archivos incluidos en el repositorio:
-- README.md (Consolidado general con renderizado nativo en GitHub)
-- diagrama-objetual-festivos.md (Modelo NoSQL en sintaxis Mermaid classDiagram)
-- diagrama-arquitectura-festivos.md (Arquitectura por capas en sintaxis Mermaid graph TD con subgraphs)
-
-Quedamos atentos a sus comentarios y retroalimentación.
-
-Cordialmente,
-Camilo Ospina Hernández
-Luis David Orozco Moreno
-```
