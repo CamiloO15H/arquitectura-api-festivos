@@ -1,149 +1,158 @@
-# Diagrama de Arquitectura por Capas - Microservicio API Calendario
+# Diagrama de Arquitectura Cebolla (Onion Architecture) - Microservicio API Calendario
 
 > **Asignatura:** Arquitectura de Software II  
-> **Docente:** Fray León Osorio Rivera  
-> **Evaluación:** Segundo Seguimiento (20%) - Diagrama 2  
+> **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
+> **Evaluación:** Segundo Seguimiento (20%) - Diagrama de Aplicación  
 > **Stack Tecnológico:** Java + Spring Boot + Spring Data JPA + PostgreSQL  
+> **Fecha Límite:** 8 de Octubre de 2026  
 
 ---
 
-## 1. Justificación Arquitectónica
+## 1. Justificación Arquitectónica: Arquitectura Cebolla (Onion Architecture)
 
-El microservicio de Calendario cumple dos roles dentro de la solución:
+Para el desarrollo del microservicio de Calendario en **Spring Boot**, se adopta rigurosamente el patrón de **Arquitectura Cebolla (*Onion Architecture*)**, siguiendo la cátedra y directriz técnica impartida por el docente Fray León Osorio Rivera (sesión del 1 de octubre de 2026).
 
-- **Servidor:** expone los endpoints `generar` y `listar` del calendario.
-- **Cliente:** consume el endpoint `GET /api/festivos/obtener/{anio}` del microservicio de Festivos (Express + MongoDB) para conocer los festivos del año.
+A diferencia de la arquitectura por capas tradicional (donde las capas superiores dependen en cascada de la base de datos), la Arquitectura Cebolla sitúa el **dominio y las reglas de negocio en el centro absoluto**, garantizando que el núcleo sea 100% independiente de frameworks, bases de datos y servicios externos:
 
-Por eso, además de las capas tradicionales, la arquitectura incluye un **cliente HTTP** en la capa de acceso a datos. Desde el punto de vista del servicio de negocio, la API de Festivos es otra fuente de datos, igual que la base de datos: el servicio no sabe si los datos vienen de PostgreSQL o de una llamada HTTP.
-
-1. **Separación de responsabilidades (*Separation of Concerns*):** cada capa solo llama a la inmediatamente inferior. El controlador nunca accede directamente al repositorio ni al cliente HTTP; todo pasa por el servicio.
-2. **Inversión de dependencias:** el controlador depende de la interfaz `ICalendarioServicio`, no de su implementación. Spring inyecta la implementación (`@Autowired` / inyección por constructor).
-3. **Lógica de negocio aislada en el servicio:** la clasificación de cada día (laboral, fin de semana o festivo) se hace en `CalendarioServicio`, recorriendo todos los días del año y cruzándolos con la lista de festivos recibida.
-4. **Persistencia con Spring Data JPA:** los repositorios heredan de `JpaRepository`, lo que evita escribir SQL para las operaciones básicas.
+1. **Independencia del Dominio (Módulo `dominio`):**  
+   Contiene las entidades puras del negocio (`Calendario`, `Tipo`, `Usuario`) y los objetos de transferencia de datos (`FestivoDto`, `CalendarioDto`, `UsuarioLoginDto`). No contienen anotaciones de persistencia (`@Entity`) ni dependencias de Spring.
+2. **Contratos y Casos de Uso en el Núcleo (Módulo `core`):**  
+   Define los contratos mediante interfaces puras:
+   * **`InterfacesServicio`:** `ICalendarioServicio`, `ITipoServicio`, `IUsuarioServicio`.
+   * **`InterfacesRepo`:** `ICalendarioRepositorio`, `ITipoRepositorio`, `IUsuarioRepositorio`.
+   * **`InterfacesIntegracion`:** `IFestivoServicioExterno` (contrato para consumir festivos sin atarse a HTTP o URLs).
+3. **Orquestación de Negocio (Módulo `aplicacion`):**  
+   Los servicios de aplicación (`CalendarioServicio`, etc.) implementan los contratos del Core e inyectan las interfaces de repositorios e integración. La lógica de clasificar días (laboral, fin de semana, festivo) reside aquí. El submódulo de seguridad (`FiltroSeguridad`, `SeguridadServicio`) protege los recursos.
+4. **Desacoplamiento Tecnológico (Módulo `infraestructura`):**  
+   Aquí residen los detalles técnicos y adaptadores:
+   * **`RepositoriosImpl`:** Implementan las interfaces del Core conectando con `Spring Data JPA`.
+   * **`EntidadesJPA` y `RepositoriosJPA`:** Manejan el mapeo ORM (`@Entity`) hacia PostgreSQL.
+   * **`Mapeadores` (`Mappers`):** Transforman bidireccionalmente entre entidades de dominio puras y entidades JPA.
+   * **`IntegracionExt` (`FestivoServicioExterno` + `HttpServicio`):** Implementa el cliente HTTP con `RestTemplate` para consumir la API externa de Festivos (Express + MongoDB).
+5. **Capa Externa de Entrada (Módulo `presentacion`):**  
+   Punto de entrada HTTP expuesto mediante `@RestController` (`CalendarioControlador`), configuración web y documentación Swagger/OpenAPI.
 
 ---
 
-## 2. Diagrama de Arquitectura por Capas en Mermaid
+## 2. Diagrama de Arquitectura Cebolla en Mermaid
 
 ```mermaid
 graph TD
-    %% Capa de Cliente
-    subgraph ClientLayer [Capa de Cliente]
-        Client[Cliente Web / Móvil / Postman / Swagger UI]
+%% Módulo Dominio
+    subgraph Dominio [Módulo: dominio]
+        Entidades[Calendario / Tipo / Usuario]
+        DTOs[FestivoDto / CalendarioDto / UsuarioLoginDto]
     end
 
-    %% Capa de Presentación
-    subgraph PresentationLayer [Capa de Presentación / API]
-        App["CalendarioApplication.java<br/><i>@SpringBootApplication</i>"]
-        Controllers[Controladores REST<br/><i>CalendarioControlador.java</i>]
+%% Módulo Core
+    subgraph Core [Módulo: core]
+        InterfacesServicio[ICalendarioServicio / ITipoServicio / IUsuarioServicio]
+        InterfacesRepo[ICalendarioRepositorio / ITipoRepositorio<br/>IUsuarioRepositorio]
+        InterfacesIntegracion[IFestivoServicioExterno]
     end
 
-    %% Capa de Lógica de Negocio
-    subgraph BusinessLayer [Capa de Lógica de Negocio]
-        IServices[Interfaces de Servicio<br/><i>ICalendarioServicio.java</i>]
-        Services[Servicios<br/><i>CalendarioServicio.java</i>]
+%% Módulo Aplicación
+    subgraph Aplicacion [Módulo: aplicacion]
+        ServiciosApp[CalendarioServicio / TipoServicio / UsuarioServicio]
+        SeguridadApp[FiltroSeguridad / SeguridadServicio / UsuarioDetalleServicio / UsuarioDetalles]
     end
 
-    %% Capa de Acceso a Datos
-    subgraph DataAccessLayer [Capa de Acceso a Datos]
-        Repositories[Repositorios JPA<br/><i>ICalendarioRepositorio.java, ITipoRepositorio.java</i>]
-        Entities[Entidades JPA<br/><i>Calendario.java, Tipo.java</i>]
-        HttpClient[Cliente HTTP<br/><i>FestivoCliente.java - RestTemplate</i>]
+%% Módulo Infraestructura
+    subgraph Infraestructura [Módulo: infraestructura]
+        RepositoriosImpl[CalendarioRepositorio / TipoRepositorio<br/>UsuarioRepositorio]
+        RepositoriosJPA[ICalendarioRepositorioJpa / ITipoRepositorioJpa<br/>IUsuarioRepositorioJpa]
+        EntidadesJPA[CalendarioEntidad / TipoEntidad<br/>UsuarioEntidad]
+        Mapeadores[CalendarioMapeador / TipoMapeador<br/>UsuarioMapeador]
+        IntegracionExt[FestivoServicioExterno / HttpServicio]
+        DB[(Base de Datos: PostgreSQL)]
+        APIExterna[API Externa Festivos<br/>Express.js + MongoDB]
     end
 
-    %% Capa de Persistencia
-    subgraph PersistenceLayer [Capa de Persistencia]
-        DB[(Base de Datos - PostgreSQL<br/><i>Tablas: tipo, calendario</i>)]
+%% Módulo Presentación
+    subgraph Presentacion [Módulo: presentacion]
+        ApiApp[CalendarioApplication @SpringBootApplication]
+        Controladores[CalendarioControlador / TipoControlador / UsuarioControlador]
+        Configuracion[ConfiguracionSeguridad / SwaggerConfig]
+        Handlers[ExcepcionesGlobalesHandler]
+        DtosPresentacion[ErrorRespuesta]
     end
 
-    %% Microservicio externo
-    subgraph ExternalLayer [Microservicio Externo]
-        FestivosAPI[API Festivos<br/><i>Express.js + MongoDB</i><br/>GET /api/festivos/obtener/:anio]
-    end
+%% Relaciones Aplicación -> Core / Dominio
+    ServiciosApp -.->|Implementa| InterfacesServicio
+    ServiciosApp -->|Inyecta| InterfacesRepo
+    ServiciosApp -->|Inyecta| InterfacesIntegracion
+    ServiciosApp -->|Maneja| Entidades
+    SeguridadApp -->|Inyecta| InterfacesRepo
 
-    %% Flujo de la Petición (Request)
-    Client -->|1. Petición HTTP GET generar / listar| App
-    App -->|2. DispatcherServlet enruta a| Controllers
-    Controllers -->|3. Invoca operación de| IServices
-    IServices -->|4. Implementada por| Services
-    Services -->|5. Solicita festivos del año a| HttpClient
-    HttpClient -->|6. Petición HTTP GET| FestivosAPI
-    FestivosAPI -.->|7. Lista JSON de festivos| HttpClient
-    HttpClient -.->|8. Lista de FestivoDto| Services
-    Services -->|9. Clasifica cada día y guarda mediante| Repositories
-    Repositories -->|10. Mapea| Entities
-    Repositories -->|11. INSERT / SELECT| DB
+%% Relaciones Infraestructura -> Core / Dominio
+    RepositoriosImpl -.->|Implementa| InterfacesRepo
+    RepositoriosImpl -->|Inyecta| RepositoriosJPA
+    RepositoriosImpl -->|Usa| Mapeadores
 
-    %% Flujo de la Respuesta (Response)
-    DB -.->|12. Retorna registros| Repositories
-    Repositories -.->|13. Entidades Calendario / Tipo| Services
-    Services -.->|14. Resultado true o lista de días| Controllers
-    Controllers -.->|15. Respuesta JSON / HTTP Status| Client
+    Mapeadores -->|Transforma| Entidades
+    Mapeadores -->|Transforma| EntidadesJPA
 
-    %% Estilos
-    style ClientLayer fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
-    style PresentationLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style BusinessLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style DataAccessLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style PersistenceLayer fill:#ffebee,stroke:#d32f2f,stroke-width:2px
-    style ExternalLayer fill:#eceff1,stroke:#455a64,stroke-width:2px,stroke-dasharray: 5 5
+    FestivoServicioExterno -.->|Implementa| InterfacesIntegracion
+    FestivoServicioExterno -->|RestTemplate / GET| APIExterna
+
+%% Relaciones JPA -> Base de Datos
+    RepositoriosJPA -->|Spring Data JPA / SQL| DB
+    EntidadesJPA -->|Mapeo ORM @Entity| DB
+
+%% Relaciones Presentación -> Aplicación / Core / Dominio
+    Controladores -->|Inyecta| InterfacesServicio
+    Controladores -->|Usa| DTOs
+    Controladores -->|Usa| Entidades
+    Configuracion -->|Usa| SeguridadApp
 ```
 
 ---
 
-## 3. Matriz de Componentes y Responsabilidades
+## 3. Matriz de Componentes por Módulo
 
-| Capa | Archivo / Componente | Responsabilidad Técnica |
+| Módulo | Componente / Archivo | Responsabilidad Arquitectónica |
 | :--- | :--- | :--- |
-| **Cliente** | Postman / Swagger UI | Genera peticiones HTTP y consume los endpoints del calendario en formato JSON. |
-| **Presentación** | `CalendarioApplication.java` | Punto de entrada de Spring Boot. Arranca el servidor embebido (Tomcat) y el contenedor de inyección de dependencias. |
-| **Presentación** | `CalendarioControlador.java` | `@RestController` con `@RequestMapping("/api/calendario")`. Recibe el año por `@PathVariable`, valida que sea un número válido y delega al servicio. |
-| **Negocio** | `ICalendarioServicio.java` | Contrato del servicio: `boolean generar(int anio)` y `List<Calendario> listar(int anio)`. |
-| **Negocio** | `CalendarioServicio.java` | `@Service`. Obtiene los festivos del año, recorre del 1 de enero al 31 de diciembre y clasifica cada día: festivo si está en la lista; si no, fin de semana (sábado o domingo) o laboral (lunes a viernes). Guarda todo en una sola transacción (`@Transactional`). |
-| **Acceso a Datos** | `ICalendarioRepositorio.java` | `JpaRepository<Calendario, Integer>`. Guarda los días (`saveAll`), consulta por rango de fechas del año y elimina los días de un año. |
-| **Acceso a Datos** | `ITipoRepositorio.java` | `JpaRepository<Tipo, Integer>`. Consulta el catálogo de tipos de día. |
-| **Acceso a Datos** | `Calendario.java`, `Tipo.java` | Entidades `@Entity` mapeadas a las tablas `calendario` y `tipo`. `Calendario` tiene `@ManyToOne` hacia `Tipo`. |
-| **Acceso a Datos** | `FestivoCliente.java` | `@Component` que usa `RestTemplate` para llamar a `GET /api/festivos/obtener/{anio}` y convertir la respuesta en `List<FestivoDto>`. La URL base se lee de `application.properties`. |
-| **Persistencia** | PostgreSQL | Motor relacional donde residen las tablas `tipo` y `calendario`. |
-| **Externo** | API Festivos (Express + MongoDB) | Microservicio del primer seguimiento. Calcula y devuelve los festivos de un año. |
+| **Dominio** | `Calendario`, `Tipo`, `Usuario` | Entidades POJO de negocio puro, agnósticas de la persistencia. |
+| **Dominio** | `FestivoDto`, `CalendarioDto` | Objetos de transferencia para datos de entrada/salida y llamadas externas. |
+| **Core** | `ICalendarioServicio`, `ITipoServicio` | Contratos de operaciones de negocio (`generar`, `listar`). |
+| **Core** | `ICalendarioRepositorio`, `ITipoRepositorio` | Contratos abstractos de persistencia. |
+| **Core** | `IFestivoServicioExterno` | Contrato de integración para la obtención de días festivos. |
+| **Aplicación** | `CalendarioServicio` | Orquesta la generación anual de días, consulta de festivos y persistencia. |
+| **Aplicación** | `FiltroSeguridad`, `SeguridadServicio` | Filtro de autorización, autenticación y manejo de contexto de seguridad. |
+| **Infraestructura** | `CalendarioRepositorio`, `TipoRepositorio` | Implementan las interfaces de Core; delegan a JPA y mapean entidades. |
+| **Infraestructura** | `ICalendarioRepositorioJpa` | Interface `JpaRepository<CalendarioEntidad, Integer>` provista por Spring. |
+| **Infraestructura** | `CalendarioEntidad`, `TipoEntidad` | Modelos ORM con anotaciones JPA (`@Entity`, `@Table`, `@ManyToOne`). |
+| **Infraestructura** | `CalendarioMapeador`, `TipoMapeador` | Conversión bidireccional entre Dominio y Entidad JPA. |
+| **Infraestructura** | `FestivoServicioExterno`, `HttpServicio` | Adaptador con `RestTemplate` para la llamada HTTP a `/api/festivos/obtener/:anio`. |
+| **Presentación** | `CalendarioApplication` | Inicialización de Spring Boot (`@SpringBootApplication`). |
+| **Presentación** | `CalendarioControlador` | Endpoints REST (`@GetMapping("/api/calendario/generar/{anio}")`, etc.). |
+| **Presentación** | `ExcepcionesGlobalesHandler` | Manejo centralizado de respuestas HTTP de error (`@ControllerAdvice`). |
 
 ---
 
-## 4. Endpoints Expuestos por la Arquitectura
-
-1. **Generar calendario de un año:**
-   * **Ruta:** `GET /api/calendario/generar/{anio}`
-   * **Ejemplo:** `/api/calendario/generar/2023` → Respuesta: `true`
-   * **Proceso:** consume la API de Festivos, clasifica los 365 (o 366) días del año y los almacena en PostgreSQL. Si el año ya había sido generado, se eliminan sus registros antes de volver a insertarlos, para no duplicar fechas.
-   * **Error:** si la API de Festivos no responde o falla el guardado, la transacción se revierte y se responde `false`.
-
-2. **Listar calendario de un año:**
-   * **Ruta:** `GET /api/calendario/listar/{anio}`
-   * **Respuesta:** Array JSON con todos los días del año clasificados:
-
-   ```json
-   [
-     { "id": 1, "fecha": "2023-01-01", "tipo": { "id": 3, "tipo": "Día festivo" }, "descripcion": "Domingo" },
-     { "id": 2, "fecha": "2023-01-02", "tipo": { "id": 1, "tipo": "Día laboral" }, "descripcion": "Lunes" }
-   ]
-   ```
-
----
-
-## 5. Integración entre Microservicios
+## 4. Flujo de Integración entre Microservicios
 
 ```mermaid
 sequenceDiagram
-    actor Cliente
-    participant Cal as API Calendario<br/>(Spring Boot)
-    participant Fes as API Festivos<br/>(Express)
-    participant PG as PostgreSQL
+    actor Cliente as Cliente HTTP (Postman / Web)
+    participant Ctrl as CalendarioControlador (Presentación)
+    participant Srv as CalendarioServicio (Aplicación)
+    participant Ext as FestivoServicioExterno (Infraestructura)
+    participant API as API Festivos (Express + MongoDB)
+    participant Repo as CalendarioRepositorio (Infraestructura)
+    participant DB as PostgreSQL (BD)
 
-    Cliente->>Cal: GET /api/calendario/generar/2023
-    Cal->>Fes: GET /api/festivos/obtener/2023
-    Fes-->>Cal: [{ festivo, fecha }, ...]
-    Cal->>Cal: Clasificar cada día del año
-    Cal->>PG: DELETE días de 2023 + INSERT 365 días
-    PG-->>Cal: OK
-    Cal-->>Cliente: true
+    Cliente->>Ctrl: GET /api/calendario/generar/2026
+    Ctrl->>Srv: generar(2026)
+    Srv->>Ext: obtenerFestivos(2026)
+    Ext->>API: GET /api/festivos/obtener/2026 (RestTemplate)
+    API-->>Ext: JSON [FestivoDto]
+    Ext-->>Srv: List<FestivoDto>
+    Srv->>Srv: Clasifica los 365 días (Laboral / Fin de semana / Festivo)
+    Srv->>Repo: guardarCalendario(List<Calendario>)
+    Repo->>DB: INSERT INTO calendario (...)
+    DB-->>Repo: OK
+    Repo-->>Srv: OK
+    Srv-->>Ctrl: true
+    Ctrl-->>Cliente: 200 OK (true)
 ```
