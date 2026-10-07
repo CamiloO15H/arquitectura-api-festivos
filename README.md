@@ -1,11 +1,12 @@
-# Arquitectura de Software II - Evaluación 1 (Seguimiento 20%)
-## Modelado Arquitectónico: Microservicio de Festivos (Express.js + MongoDB)
+# Arquitectura de Software II - Taller 1 (Seguimientos 1 y 2 - 40%)
+## Modelado Arquitectónico: Microservicios de Festivos (Express.js + MongoDB) y Calendario (Spring Boot + PostgreSQL)
 
 > **Institución:** Instituto Tecnológico Metropolitano (ITM)  
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
-> **Fecha de Entrega:** Septiembre 24, 2026  
-> **Repositorio Oficial:** [https://github.com/Camilo015H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)
+> **Entrega Seguimiento 1 (API Festivos):** Septiembre 24, 2026  
+> **Entrega Seguimiento 2 (API Calendario):** Octubre 8, 2026  
+> **Repositorio Oficial:** [https://github.com/CamiloO15H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)
 
 ---
 
@@ -13,7 +14,7 @@
 
 | # | Nombre Completo | Usuario GitHub |
 | :-: | :--- | :--- |
-| 1 | **Camilo Ospina Hernández** | [@Camilo015H](https://github.com/Camilo015H) |
+| 1 | **Camilo Ospina Hernández** | [@CamiloO15H](https://github.com/CamiloO15H) |
 | 2 | **Luis David Orozco Moreno** | Integrante |
 
 ---
@@ -132,3 +133,108 @@ graph TD
 | `POST`| `/api/festivos/agregar` | Registra una nueva regla de festivo dentro de un tipo existente (ej. Virgen de Chiquinquirá). | Objeto festivo registrado con `201 Created`. |
 | `PUT` | `/api/festivos/modificar` | Actualiza la información o regla de un festivo embebido. | Objeto modificado con `200 OK`. |
 | `DELETE`| `/api/festivos/eliminar/:id` | Elimina la configuración de un festivo. | Mensaje de confirmación con `200 OK`. |
+
+---
+
+# Segundo Seguimiento (20%): Microservicio de Calendario (Spring Boot + PostgreSQL)
+
+Este microservicio es **cliente** de la API de Festivos: consume `GET /api/festivos/obtener/{anio}` para obtener los festivos de un año, clasifica todos los días del año (laboral, fin de semana o festivo) y los almacena en PostgreSQL.
+
+## 📊 Diagrama 3: Modelo Relacional de Base de Datos (PostgreSQL)
+
+*Archivo fuente individual:* [`diagrama-relacional-calendario.md`](./diagrama-relacional-calendario.md)
+
+### Justificación
+Los datos del calendario tienen un esquema fijo y una relación directa entre entidades, por lo que se modelan con un **Diagrama Entidad-Relación**. Un `TIPO` clasifica cero o muchos días del `CALENDARIO` mediante la llave foránea `idtipo`.
+
+```mermaid
+erDiagram
+    TIPO ||--o{ CALENDARIO : "clasifica"
+
+    TIPO {
+        integer id PK "Identificador del tipo (1, 2, 3)"
+        varchar tipo "Día laboral / Fin de Semana / Día festivo"
+    }
+
+    CALENDARIO {
+        integer id PK "Identificador autoincremental"
+        date fecha UK "Fecha del día (única)"
+        integer idtipo FK "Referencia a TIPO.id"
+        varchar descripcion "Nombre del día de la semana"
+    }
+```
+
+---
+
+## 🏛️ Diagrama 4: Arquitectura por Capas del Microservicio de Calendario
+
+*Archivo fuente individual:* [`diagrama-arquitectura-calendario.md`](./diagrama-arquitectura-calendario.md)
+
+### Justificación
+* **Capas estrictas:** el controlador solo habla con el servicio (a través de su interfaz) y el servicio es el único que accede a los repositorios y al cliente HTTP.
+* **Cliente HTTP como fuente de datos:** `FestivoCliente.java` (RestTemplate) encapsula la comunicación con la API de Festivos, de modo que el servicio la trata igual que a un repositorio.
+* **Persistencia con Spring Data JPA:** repositorios `JpaRepository` sobre las entidades `Calendario` y `Tipo`.
+
+```mermaid
+graph TD
+    subgraph ClientLayer [Capa de Cliente]
+        Client[Cliente Web / Móvil / Postman / Swagger UI]
+    end
+
+    subgraph PresentationLayer [Capa de Presentación / API]
+        App[CalendarioApplication.java<br/><i>@SpringBootApplication</i>]
+        Controllers[Controladores REST<br/><i>CalendarioControlador.java</i>]
+    end
+
+    subgraph BusinessLayer [Capa de Lógica de Negocio]
+        IServices[Interfaces de Servicio<br/><i>ICalendarioServicio.java</i>]
+        Services[Servicios<br/><i>CalendarioServicio.java</i>]
+    end
+
+    subgraph DataAccessLayer [Capa de Acceso a Datos]
+        Repositories[Repositorios JPA<br/><i>ICalendarioRepositorio.java, ITipoRepositorio.java</i>]
+        Entities[Entidades JPA<br/><i>Calendario.java, Tipo.java</i>]
+        HttpClient[Cliente HTTP<br/><i>FestivoCliente.java - RestTemplate</i>]
+    end
+
+    subgraph PersistenceLayer [Capa de Persistencia]
+        DB[(Base de Datos - PostgreSQL<br/><i>Tablas: tipo, calendario</i>)]
+    end
+
+    subgraph ExternalLayer [Microservicio Externo]
+        FestivosAPI[API Festivos<br/><i>Express.js + MongoDB</i><br/>GET /api/festivos/obtener/:anio]
+    end
+
+    Client -->|1. Petición HTTP GET generar / listar| App
+    App -->|2. DispatcherServlet enruta a| Controllers
+    Controllers -->|3. Invoca operación de| IServices
+    IServices -->|4. Implementada por| Services
+    Services -->|5. Solicita festivos del año a| HttpClient
+    HttpClient -->|6. Petición HTTP GET| FestivosAPI
+    FestivosAPI -.->|7. Lista JSON de festivos| HttpClient
+    HttpClient -.->|8. Lista de FestivoDto| Services
+    Services -->|9. Clasifica cada día y guarda mediante| Repositories
+    Repositories -->|10. Mapea| Entities
+    Repositories -->|11. INSERT / SELECT| DB
+
+    DB -.->|12. Retorna registros| Repositories
+    Repositories -.->|13. Entidades Calendario / Tipo| Services
+    Services -.->|14. Resultado true o lista de días| Controllers
+    Controllers -.->|15. Respuesta JSON / HTTP Status| Client
+
+    style ClientLayer fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style PresentationLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style BusinessLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style DataAccessLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style PersistenceLayer fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    style ExternalLayer fill:#eceff1,stroke:#455a64,stroke-width:2px,stroke-dasharray: 5 5
+```
+
+---
+
+## 🔌 Endpoints del Microservicio de Calendario
+
+| Método | Endpoint | Descripción de Negocio | Respuesta Esperada |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/calendario/generar/{anio}` | Consume la API de Festivos, clasifica todos los días del año y los almacena en PostgreSQL. | `true` si el proceso fue exitoso, `false` en caso contrario. |
+| `GET` | `/api/calendario/listar/{anio}` | Devuelve el calendario completo del año con cada día clasificado. | Array JSON de días con `id`, `fecha`, `tipo` y `descripcion`. |
