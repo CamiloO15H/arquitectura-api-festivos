@@ -34,7 +34,7 @@ graph TD
 
     %% Capa de Presentación
     subgraph PresentationLayer [Capa de Presentación / API]
-        App[CalendarioApplication.java<br/><i>@SpringBootApplication</i>]
+        App["CalendarioApplication.java<br/><i>@SpringBootApplication</i>"]
         Controllers[Controladores REST<br/><i>CalendarioControlador.java</i>]
     end
 
