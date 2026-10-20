@@ -1,12 +1,11 @@
-# Arquitectura de Software II - Taller 1 (Seguimientos 1 y 2 - 40%)
-## Modelado Arquitectónico: Microservicios de Festivos (Express.js + MongoDB) y Calendario (Spring Boot + PostgreSQL)
+# Arquitectura de Software II - Proyecto Integrador de Microservicios
+## Microservicio 1: API Festivos de Colombia (Express.js + MongoDB)
+## Microservicio 2: API Calendario Laboral (Spring Boot + PostgreSQL)
 
 > **Institución:** Instituto Tecnológico Metropolitano (ITM)  
 > **Docente:** Fray León Osorio Rivera (`frayosorio@gmail.com`)  
 > **Asignatura:** Arquitectura de Software II  
-> **Entrega Seguimiento 1 (API Festivos - 20%):** Septiembre 24, 2026  
-> **Entrega Seguimiento 2 (API Calendario - 20%):** Octubre 8, 2026  
-> **Repositorio Oficial:** [https://github.com/CamiloO15H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)
+> **Repositorio Oficial:** [https://github.com/CamiloO15H/arquitectura-api-festivos](https://github.com/CamiloO15H/arquitectura-api-festivos)  
 
 ---
 
@@ -19,136 +18,159 @@
 
 ---
 
-## 📌 Resumen de la Solución
+# 🏆 TERCER SEGUIMIENTO (20% - ENTREGA ACTUAL): Implementación API Festivos
 
-El presente repositorio contiene la entrega oficial de la **fase de modelado arquitectónico** para dos microservicios interconectados:
-1. **API Festivos de Colombia (Seguimiento 1 - 20%):** Desarrollada sobre el stack **Node.js + Express.js** y persistida en **MongoDB**. Calcula festivos fijos, Ley Emiliani (traslados a lunes) y Pascua católica.
-2. **API Calendario (Seguimiento 2 - 20%):** Desarrollada en **Java + Spring Boot + Spring Data JPA** y persistida en **PostgreSQL**, implementada bajo el patrón de **Arquitectura Cebolla (*Onion Architecture*)**. Consume la API de Festivos para clasificar y persistir todos los días del año.
+> **Fecha Límite:** **22 de Octubre de 2026**  
+> **Tecnologías:** Node.js + Express.js + MongoDB Atlas + Swagger UI  
+> **Estado:** ✅ **100% Funcional y Verificado con Pruebas Automatizadas**  
 
-Cumpliendo rigurosamente con los lineamientos técnicos y pedagógicos del docente Fray León Osorio Rivera:
-* **Modelado en Código Editable (*Diagrams as Code*):** Sintaxis estándar de **Mermaid.js**, renderizable nativamente en GitHub.
-* **Correspondencia Fiel con la Implementación:** Los diagramas reflejan directamente las clases, módulos e interfaces del código fuente.
-* **Aislamiento de Lógica Algorítmica:** La base de datos almacena directrices de cálculo y tipos, mientras la lógica reside desacoplada en los servicios.
+Esta entrega corresponde a la **implementación de código funcional** del microservicio de Festivos de Colombia. La solución calcula dinámicamente las fechas festivas a partir de las reglas de cálculo almacenadas en una base de datos **MongoDB Atlas**, aplicando el algoritmo astronómico del Domingo de Pascua y los traslados de puente festivo de la **Ley Emiliani (Ley 51 de 1983)**.
 
 ---
 
-# 🚀 Primer Seguimiento (20%): API Festivos (Express.js + MongoDB)
+### 🚀 1. Guía Rápida de Ejecución
 
-## 📊 Diagrama 1: Modelo Objetual de Base de Datos NoSQL (MongoDB)
+```bash
+# 1. Clonar el repositorio (si no lo tienes)
+git clone https://github.com/CamiloO15H/arquitectura-api-festivos.git
+cd arquitectura-api-festivos
 
-*Archivo fuente individual:* [`diagrama-objetual-festivos.md`](./diagrama-objetual-festivos.md)
+# 2. Instalar dependencias
+npm install
 
-### Justificación
-Para bases de datos de documentos como MongoDB, el estándar de modelado es el **Diagrama de Clases** representando **Colecciones y Subdocumentos Embebidos**. La colección raíz `TipoFestivo` (`tipos`) agrupa mediante composición (`*--`) un conjunto de festivos (`0..*`), eliminando llaves foráneas y uniones costosas.
+# 3. Iniciar el servidor Express (conectado a MongoDB Atlas)
+npm start
+```
 
-```mermaid
-classDiagram
-    class TipoFestivo {
-        +Number id
-        +String tipo
-        +String modoCalculo
-        +Array festivos
-    }
-
-    class Festivo {
-        +Number dia
-        +Number mes
-        +String nombre
-        +Number diasPascua
-    }
-
-    TipoFestivo "1" *-- "0..*" Festivo : contiene embebidos
+La consola confirmará el inicio del servicio:
+```text
+=======================================================
+🚀 API Festivos ejecutándose en: http://localhost:3000
+📖 Documentación Swagger UI en: http://localhost:3000/api-docs
+=======================================================
 ```
 
 ---
 
-## 🏛️ Diagrama 2: Arquitectura por Capas del Microservicio de Festivos
+### 📖 2. Documentación Interactiva en Vivo (Swagger UI)
 
-*Archivo fuente individual:* [`diagrama-arquitectura-festivos.md`](./diagrama-arquitectura-festivos.md)
+Con el servidor encendido, abre en tu navegador:  
+👉 **[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**  
 
-### Justificación
-Sigue un patrón horizontal por capas estricto (*Separation of Concerns*):
-* **Entrada y Validación:** El middleware `festivo.validador.js` actúa como *Chain of Responsibility* (`next()`) antes del controlador.
-* **Lógica de Negocio Desacoplada:** `calculoFechas.servicio.js` aísla el cálculo de la Pascua y los traslados al lunes de la Ley Emiliani (Ley 51 de 1983).
-* **Acceso a Datos:** `festivo.repositorio.js` gestiona directamente las colecciones en MongoDB.
+Desde la interfaz gráfica de Swagger puedes probar interactivamente cada endpoint con botones *«Try it out»*.
 
-```mermaid
-graph TD
-    %% Capa de Cliente / Presentación Externa
-    subgraph ClientLayer [Capa de Cliente]
-        Client[Cliente Web / Móvil / Postman / Swagger UI / Microservicio Calendario]
-    end
+---
 
-    %% Capa de Presentación / API Gateway Local
-    subgraph PresentationLayer [Capa de Presentación / API]
-        Index[index.js / app.js]
-        Routes[Rutas Express<br/><i>festivo.rutas.js</i>]
-        Validators[Middlewares / Validadores<br/><i>festivo.validador.js</i>]
-    end
+### 🔌 3. Endpoints Disponibles y Respuestas
 
-    %% Capa de Lógica de Negocio
-    subgraph BusinessLayer [Capa de Lógica de Negocio]
-        Controllers[Controladores<br/><i>festivo.controlador.js</i>]
-        Services[Servicios de Negocio / Algoritmos<br/><i>calculoFechas.servicio.js</i>]
-    end
+#### A. Verificar si una fecha es festivo
+* **Ruta:** `GET /api/festivos/verificar/:anio/:mes/:dia`
+* **Ejemplos:**
+  * `GET /api/festivos/verificar/2026/1/1` $\rightarrow$ `200 OK`: `"Es Festivo"` *(Año Nuevo - Fijo)*
+  * `GET /api/festivos/verificar/2026/1/12` $\rightarrow$ `200 OK`: `"Es Festivo"` *(Santos Reyes - Trasladado por Ley Emiliani)*
+  * `GET /api/festivos/verificar/2026/4/2` $\rightarrow$ `200 OK`: `"Es Festivo"` *(Jueves Santo - Basado en Pascua)*
+  * `GET /api/festivos/verificar/2026/6/8` $\rightarrow$ `200 OK`: `"Es Festivo"` *(Corpus Christi - Pascua + Emiliani)*
+  * `GET /api/festivos/verificar/2026/1/2` $\rightarrow$ `200 OK`: `"No es festivo"` *(Día laboral ordinario)*
+  * `GET /api/festivos/verificar/2026/2/35` $\rightarrow$ `200 OK`: `"Fecha No valida"` *(Descartado por validador)*
 
-    %% Capa de Acceso a Datos
-    subgraph DataAccessLayer [Capa de Acceso a Datos]
-        Repositories[Repositorios / Modelos<br/><i>festivo.repositorio.js</i>]
-    end
+#### B. Obtener todos los festivos de un año
+* **Ruta:** `GET /api/festivos/obtener/:anio`
+* **Propósito:** Endpoint de integración consumido por el Microservicio de Calendario (Spring Boot).
+* **Ejemplo:** `GET /api/festivos/obtener/2026`
+* **Respuesta:** Array JSON ordenado cronológicamente con fechas calculadas:
+  ```json
+  [
+    { "festivo": "Año Nuevo", "fecha": "2026-01-01" },
+    { "festivo": "Santos Reyes", "fecha": "2026-01-12" },
+    { "festivo": "San José", "fecha": "2026-03-23" },
+    { "festivo": "Jueves Santo", "fecha": "2026-04-02" },
+    { "festivo": "Viernes Santo", "fecha": "2026-04-03" },
+    { "festivo": "Domingo de Pascua", "fecha": "2026-04-05" },
+    { "festivo": "Día del Trabajo", "fecha": "2026-05-01" },
+    { "festivo": "Ascensión del Señor", "fecha": "2026-05-18" },
+    { "festivo": "Corpus Christi", "fecha": "2026-06-08" },
+    { "festivo": "Sagrado Corazón de Jesús", "fecha": "2026-06-15" },
+    { "festivo": "San Pedro y San Pablo", "fecha": "2026-06-29" },
+    { "festivo": "Día de la Independencia", "fecha": "2026-07-20" },
+    { "festivo": "Batalla de Boyacá", "fecha": "2026-08-07" },
+    { "festivo": "Asunción de la Virgen", "fecha": "2026-08-17" },
+    { "festivo": "Día de la Raza", "fecha": "2026-10-12" },
+    { "festivo": "Todos los Santos", "fecha": "2026-11-02" },
+    { "festivo": "Independencia de Cartagena", "fecha": "2026-11-16" },
+    { "festivo": "Inmaculada Concepción", "fecha": "2026-12-08" },
+    { "festivo": "Navidad", "fecha": "2026-12-25" }
+  ]
+  ```
 
-    %% Capa de Persistencia
-    subgraph PersistenceLayer [Capa de Persistencia]
-        DB[(Base de Datos - MongoDB<br/><i>Colección: tipos</i>)]
-    end
+#### C. Operaciones CRUD (Administración de Festivos en MongoDB)
+* `POST /api/festivos/agregar`: Inserta una regla de festivo dentro de un tipo (`$push`).
+* `PUT /api/festivos/modificar`: Modifica los datos de un festivo existente (`$set`).
+* `DELETE /api/festivos/eliminar/:idTipo/:nombre`: Elimina una regla de festivo (`$pull`).
 
-    %% Flujo de la Petición (Request)
-    Client -->|1. Petición HTTP GET/POST/PUT/DELETE| Index
-    Index -->|2. Delega enrutamiento a| Routes
-    Routes -->|3. Ejecuta validaciones previas| Validators
-    Validators -->|4. Pasa filtro mediante next| Controllers
-    Controllers -->|5. Solicita reglas / festivos a| Repositories
-    Repositories -->|6. Consulta / Modifica documentos| DB
+---
 
-    %% Flujo de la Respuesta (Response) y Cálculo de Negocio
-    DB -.->|7. Retorna documentos BSON| Repositories
-    Repositories -.->|8. Entrega tipos y reglas a| Controllers
-    Controllers -->|9. Envía datos y año para calcular a| Services
-    Services -.->|10. Retorna festivos calculados a| Controllers
-    Controllers -.->|11. Respuesta JSON / HTTP Status| Client
+### 🧪 4. Pruebas Automatizadas
 
-    %% Estilos de Nodos
-    style ClientLayer fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
-    style PresentationLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style BusinessLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style DataAccessLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style PersistenceLayer fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+```bash
+# Probar cálculos matemáticos aislados (2024, 2025, 2026)
+npm test
+
+# Probar integración completa contra MongoDB Atlas en vivo
+node scripts/test-api.js
+
+# Probar peticiones HTTP reales al servidor
+node scripts/test-server.js
 ```
 
 ---
 
-# 📅 Segundo Seguimiento (20%): API Calendario (Spring Boot + PostgreSQL)
+### 📂 5. Estructura del Microservicio
 
-*Fecha Límite:* **8 de Octubre de 2026**
+```text
+├── app.js                          # Configuración de Express, CORS y servidor
+├── configuracion/
+│   ├── bd.config.js                # Variables de conexión a MongoDB
+│   └── swagger.config.js           # Especificación OpenAPI 3.0 para Swagger
+├── controladores/
+│   └── festivo.controlador.js      # Lógica de respuestas HTTP
+├── modelos/
+│   ├── bd.js                       # Cliente de conexión oficial MongoClient
+│   └── festivo.repositorio.js      # Consultas y operaciones CRUD ($push, $set, $pull)
+├── rutas/
+│   └── festivo.rutas.js            # Enrutamiento de endpoints
+├── servicios/
+│   └── calculoFechas.servicio.js   # Algoritmo de Butcher/Meeus y Ley Emiliani
+├── validadores/
+│   └── festivo.validador.js        # Middleware de validación de fechas
+└── scripts/
+    ├── seed.js                     # Poblar colección 'tipos' en MongoDB Atlas
+    ├── test-api.js                 # Suite de pruebas automatizadas
+    ├── test-fechas.js              # Verificación matemática
+    └── test-server.js              # Test HTTP en vivo
+```
+
+---
+
+# 📅 SEGUNDO SEGUIMIENTO (20%): Modelado Arquitectónico API Calendario
+
+> **Docente:** Fray León Osorio Rivera  
+> **Fecha de Entrega:** 8 de Octubre de 2026  
+> **Tecnologías:** Spring Boot + Spring Data JPA + PostgreSQL  
+> **Patrón Arquitectónico:** **Arquitectura Cebolla (*Onion Architecture*)**  
 
 Este microservicio cumple el doble rol de **servidor** (expone generación y listado del calendario) y **cliente** de la API de Festivos (`GET /api/festivos/obtener/{anio}` mediante `RestTemplate`), clasificando y persistiendo los 365/366 días de un año en PostgreSQL.
 
----
-
-## 📊 Diagrama 3: Modelo Relacional de Base de Datos (PostgreSQL)
+### 📊 Diagrama Relacional de Base de Datos (PostgreSQL)
 
 *Archivo fuente individual:* [`diagrama-relacional-calendario.md`](./diagrama-relacional-calendario.md)
-
-### Justificación
-Los datos del calendario poseen esquema tabular fijo y relaciones referenciales directas, modeladas mediante un **Diagrama Entidad-Relación (ER)**. La tabla `TIPO` clasifica días del `CALENDARIO` mediante la clave foránea `idtipo → tipo.id`.
 
 ```mermaid
 erDiagram
     TIPO ||--o{ CALENDARIO : "clasifica"
 
     TIPO {
-        integer id PK "Identificador del tipo (1, 2, 3)"
-        varchar tipo "Día laboral / Fin de Semana / Día festivo"
+        integer id PK "Identificador del tipo (1: Laboral, 2: Fin de Semana, 3: Festivo)"
+        varchar tipo "Nombre de la clasificación"
     }
 
     CALENDARIO {
@@ -159,19 +181,9 @@ erDiagram
     }
 ```
 
----
-
-## 🏛️ Diagrama 4: Arquitectura Cebolla (Onion Architecture) - Spring Boot
+### 🏛️ Diagrama de Arquitectura Cebolla (Onion Architecture)
 
 *Archivo fuente individual:* [`diagrama-arquitectura-calendario.md`](./diagrama-arquitectura-calendario.md)
-
-### Justificación
-Implementa el patrón **Arquitectura Cebolla (*Onion Architecture*)** abordado en la sesión del 1 de octubre de 2026:
-* **Módulo Dominio:** Entidades POJO puras de negocio (`Calendario`, `Tipo`, `Usuario`) y DTOs independientes.
-* **Módulo Core:** Contratos de servicio (`ICalendarioServicio`), persistencia (`ICalendarioRepositorio`) e integración externa (`IFestivoServicioExterno`).
-* **Módulo Aplicación:** Lógica orquestadora en `CalendarioServicio` y seguridad de la aplicación.
-* **Módulo Infraestructura:** Implementaciones con `Spring Data JPA`, entidades ORM `@Entity`, mapeadores (`CalendarioMapeador`) y cliente HTTP `FestivoServicioExterno` con `HttpServicio` (`RestTemplate`).
-* **Módulo Presentación:** Controladores REST (`CalendarioControlador`), Swagger y manejo de excepciones.
 
 ```mermaid
 graph TD
@@ -245,77 +257,80 @@ graph TD
 
 ---
 
-## 🔌 Especificación de Endpoints (API Calendario)
+# 🚀 PRIMER SEGUIMIENTO (20%): Modelado Arquitectónico API Festivos
 
-| Método | Endpoint | Descripción de Negocio | Respuesta Esperada |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/calendario/generar/{anio}` | Consume festivos de la API Express, clasifica los días del año y los persiste en PostgreSQL. | `true` / `false` |
-| `GET` | `/api/calendario/listar/{anio}` | Retorna el listado completo de los días del año clasificados con su tipo. | Array JSON de días con tipo anidado |
+> **Docente:** Fray León Osorio Rivera  
+> **Fecha de Entrega:** 24 de Septiembre de 2026  
+> **Tecnologías:** Node.js + Express.js + MongoDB  
+> **Patrón Arquitectónico:** Arquitectura en Capas / MVC  
 
+### 📊 Diagrama 1: Modelo Objetual NoSQL (MongoDB)
 
----
+*Archivo fuente individual:* [`diagrama-objetual-festivos.md`](./diagrama-objetual-festivos.md)
 
-# 💻 Tercer Seguimiento (20%): Implementación API Festivos (Node.js + Express.js + MongoDB)
+```mermaid
+classDiagram
+    class TipoFestivo {
+        +Number id
+        +String tipo
+        +String modoCalculo
+        +Array festivos
+    }
 
-*Entrega:* **22 de Octubre de 2026**
+    class Festivo {
+        +Number dia
+        +Number mes
+        +String nombre
+        +Number diasPascua
+    }
 
-Este microservicio implementa la lógica completa de festivos de Colombia conectándose a una base de datos **MongoDB** (colección `tipos`) y exponiendo endpoints documentados en **Swagger UI**.
-
-### 1. Requisitos Previos
-* Node.js v18+ instalado.
-* Conexión a MongoDB (MongoDB Atlas en la nube o instancia local en `localhost:27017`).
-
-### 2. Instalación y Configuración
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/CamiloO15H/arquitectura-api-festivos.git
-cd arquitectura-api-festivos
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Configurar variables de entorno (.env)
-# Copiar .env.example a .env y ajustar la cadena de conexión de MongoDB
-cp .env.example .env
+    TipoFestivo "1" *-- "0..*" Festivo : contiene embebidos
 ```
 
-### 3. Poblar la Base de Datos Inicial (Seed)
+### 🏛️ Diagrama 2: Arquitectura por Capas del Microservicio
 
-Para cargar los 4 tipos de festivos y las reglas oficiales de Colombia en MongoDB Atlas:
+*Archivo fuente individual:* [`diagrama-arquitectura-festivos.md`](./diagrama-arquitectura-festivos.md)
 
-```bash
-npm run seed
-```
+```mermaid
+graph TD
+    subgraph ClientLayer [Capa de Cliente]
+        Client[Cliente Web / Móvil / Postman / Swagger UI / Microservicio Calendario]
+    end
 
-### 4. Ejecución del Servidor
+    subgraph PresentationLayer [Capa de Presentación / API]
+        Index[app.js]
+        Routes[Rutas Express<br/><i>festivo.rutas.js</i>]
+        Validators[Middlewares / Validadores<br/><i>festivo.validador.js</i>]
+    end
 
-```bash
-# Iniciar el microservicio en http://localhost:3000
-npm start
-```
+    subgraph BusinessLayer [Capa de Lógica de Negocio]
+        Controllers[Controladores<br/><i>festivo.controlador.js</i>]
+        Services[Servicios de Negocio / Algoritmos<br/><i>calculoFechas.servicio.js</i>]
+    end
 
-### 5. Documentación Interactiva (Swagger UI)
+    subgraph DataAccessLayer [Capa de Acceso a Datos]
+        Repositories[Repositorios / Modelos<br/><i>festivo.repositorio.js</i>]
+    end
 
-Una vez iniciado el servidor, accede desde cualquier navegador a:
-👉 **`http://localhost:3000/api-docs`**
+    subgraph PersistenceLayer [Capa de Persistencia]
+        DB[(Base de Datos - MongoDB<br/><i>Colección: tipos</i>)]
+    end
 
-Allí puedes probar de forma interactiva todos los endpoints:
-* `GET /api/festivos/verificar/:anio/:mes/:dia` (Verificar si una fecha es festivo).
-* `GET /api/festivos/obtener/:anio` (Obtener festivos del año para integración con Calendario).
-* `POST /api/festivos/agregar` (Agregar un nuevo festivo).
-* `PUT /api/festivos/modificar` (Modificar festivo existente).
-* `DELETE /api/festivos/eliminar/:idTipo/:nombre` (Eliminar festivo).
+    Client -->|1. Petición HTTP| Index
+    Index -->|2. Enruta a| Routes
+    Routes -->|3. Valida| Validators
+    Validators -->|4. Next| Controllers
+    Controllers -->|5. Consulta reglas| Repositories
+    Repositories -->|6. Query BSON| DB
+    DB -.->|7. Documentos BSON| Repositories
+    Repositories -.->|8. Reglas| Controllers
+    Controllers -->|9. Calcula festivos| Services
+    Services -.->|10. Festivos calculados| Controllers
+    Controllers -.->|11. Respuesta JSON / Status| Client
 
-### 6. Ejecución de Pruebas Automatizadas
-
-```bash
-# Probar cálculos matemáticos y verificación de festivos
-npm test
-
-# Probar integración completa contra MongoDB Atlas
-node scripts/test-api.js
-
-# Probar servidor HTTP en vivo
-node scripts/test-server.js
+    style ClientLayer fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style PresentationLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style BusinessLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style DataAccessLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style PersistenceLayer fill:#ffebee,stroke:#d32f2f,stroke-width:2px
 ```
