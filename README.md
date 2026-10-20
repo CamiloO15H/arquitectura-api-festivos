@@ -251,3 +251,71 @@ graph TD
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/calendario/generar/{anio}` | Consume festivos de la API Express, clasifica los días del año y los persiste en PostgreSQL. | `true` / `false` |
 | `GET` | `/api/calendario/listar/{anio}` | Retorna el listado completo de los días del año clasificados con su tipo. | Array JSON de días con tipo anidado |
+
+
+---
+
+# 💻 Tercer Seguimiento (20%): Implementación API Festivos (Node.js + Express.js + MongoDB)
+
+*Entrega:* **22 de Octubre de 2026**
+
+Este microservicio implementa la lógica completa de festivos de Colombia conectándose a una base de datos **MongoDB** (colección `tipos`) y exponiendo endpoints documentados en **Swagger UI**.
+
+### 1. Requisitos Previos
+* Node.js v18+ instalado.
+* Conexión a MongoDB (MongoDB Atlas en la nube o instancia local en `localhost:27017`).
+
+### 2. Instalación y Configuración
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/CamiloO15H/arquitectura-api-festivos.git
+cd arquitectura-api-festivos
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variables de entorno (.env)
+# Copiar .env.example a .env y ajustar la cadena de conexión de MongoDB
+cp .env.example .env
+```
+
+### 3. Poblar la Base de Datos Inicial (Seed)
+
+Para cargar los 4 tipos de festivos y las reglas oficiales de Colombia en MongoDB Atlas:
+
+```bash
+npm run seed
+```
+
+### 4. Ejecución del Servidor
+
+```bash
+# Iniciar el microservicio en http://localhost:3000
+npm start
+```
+
+### 5. Documentación Interactiva (Swagger UI)
+
+Una vez iniciado el servidor, accede desde cualquier navegador a:
+👉 **`http://localhost:3000/api-docs`**
+
+Allí puedes probar de forma interactiva todos los endpoints:
+* `GET /api/festivos/verificar/:anio/:mes/:dia` (Verificar si una fecha es festivo).
+* `GET /api/festivos/obtener/:anio` (Obtener festivos del año para integración con Calendario).
+* `POST /api/festivos/agregar` (Agregar un nuevo festivo).
+* `PUT /api/festivos/modificar` (Modificar festivo existente).
+* `DELETE /api/festivos/eliminar/:idTipo/:nombre` (Eliminar festivo).
+
+### 6. Ejecución de Pruebas Automatizadas
+
+```bash
+# Probar cálculos matemáticos y verificación de festivos
+npm test
+
+# Probar integración completa contra MongoDB Atlas
+node scripts/test-api.js
+
+# Probar servidor HTTP en vivo
+node scripts/test-server.js
+```

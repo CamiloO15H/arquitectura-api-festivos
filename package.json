@@ -1,0 +1,32 @@
+{
+  "name": "api-festivos-colombia",
+  "version": "1.0.0",
+  "description": "API RESTful en Express.js + MongoDB para calcular y consultar festivos en Colombia",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "seed": "node scripts/seed.js",
+    "test": "node scripts/test-fechas.js"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "festivos",
+    "colombia",
+    "ley-emiliani",
+    "swagger"
+  ],
+  "author": "Camilo Ospina Hernández & Luis David Orozco Moreno",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
+  }
+}
